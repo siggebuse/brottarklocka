@@ -79,75 +79,79 @@ function splitPersonBlock(s=""){
 
 
 function parseRowFlexible(row){
-  const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>strip(m[1]));
-  if(rawCells.length<3) return null;
+  const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>m[1]);
+  const cells=rawCells.map(c=>strip(c));
+  if(cells.length<5) return null;
 
-  // Match number can be in different columns depending on list layout.
-  let numberIndex=-1, matchNumber=null;
-  for(let i=0;i<Math.min(rawCells.length,6);i++){
-    const m=rawCells[i].match(/^\s*(\d{1,4})\s*$/);
+  // Matchnumret ligger i början av raden.
+  let matchNumber=null;
+  for(let i=0;i<Math.min(cells.length,4);i++){
+    const m=cells[i].match(/^\s*(\d{1,4})\s*$/);
     if(m){
       const n=Number(m[1]);
-      if(n>=1 && n<=5000){ numberIndex=i; matchNumber=n; break; }
+      if(n>=1 && n<=5000){ matchNumber=n; break; }
     }
   }
   if(matchNumber==null) return null;
 
-  // Layout A: each wrestler is a cell containing "Name<br>Club".
-  const blocks=[];
-  for(let i=numberIndex+1;i<rawCells.length;i++){
-    const b=splitPersonBlock(rawCells[i]);
-    if(b && !looksLikeNoise(b.name) && !looksLikeNoise(b.club)){
-      blocks.push(b);
-    }
+  // I RingerDB:s matchlistor är brottarnamnen klickbara länkar.
+  // Vi letar därför efter de två celler som innehåller en <a>-tagg
+  // och läser "namn + klubb" ur just dessa celler.
+  const people=[];
+  for(let i=0;i<rawCells.length;i++){
+    if(!/<a\b/i.test(rawCells[i])) continue;
+
+    const text=strip(rawCells[i]);
+    const lines=text.split("\n").map(x=>x.trim()).filter(Boolean);
+    if(lines.length<2) continue;
+
+    // Första raden är normalt brottarens namn, resterande är klubb/distrikt.
+    const name=lines[0];
+    const club=lines.slice(1).join(" ");
+
+    if(!name || !club) continue;
+    if(looksLikeNoise(name) || looksLikeNoise(club)) continue;
+
+    people.push({name,club});
   }
-  if(blocks.length>=2){
+
+  if(people.length>=2){
     return {
       matchNumber,
-      redName:blocks[0].name, redClub:blocks[0].club,
-      blueName:blocks[1].name, blueClub:blocks[1].club
+      redName:people[0].name,
+      redClub:people[0].club,
+      blueName:people[1].name,
+      blueClub:people[1].club
     };
   }
 
-  // Layout B: name and club use separate cells.
-  const candidates=[];
-  for(let i=numberIndex+1;i<rawCells.length;i++){
-    const v=rawCells[i].replace(/\n/g," ").trim();
-    if(!v || looksLikeNoise(v)) continue;
-    // Ignore obvious result/metadata cells.
-    if(/^\(?\d+\s*:\s*\d+\)?$/.test(v)) continue;
-    if(/^(röd|rot|red|blå|blau|blue)$/i.test(v)) continue;
-    candidates.push(v);
+  // Fallback för sidor där namnen inte är länkar:
+  // hitta celler som tydligt innehåller "namn<br>klubb".
+  const blocks=[];
+  for(const raw of rawCells){
+    const b=splitPersonBlock(strip(raw));
+    if(!b) continue;
+    if(looksLikeNoise(b.name) || looksLikeNoise(b.club)) continue;
+
+    // Undvik pool/omgång som "N2-N1 / N Omg. 2".
+    if(/^[A-Z]?\d+\s*-\s*[A-Z]?\d+$/i.test(b.name)) continue;
+    if(/\bOmg\.?\b/i.test(b.club)) continue;
+
+    blocks.push(b);
   }
 
-  // Most RingerDB match lists yield:
-  // wrestler 1, club 1, wrestler 2, club 2 among the textual candidates.
-  // Prefer a 4-item window whose names look like personal names and clubs look plausible.
-  function nameScore(v){
-    let s=0;
-    if(v.split(/\s+/).length>=2) s+=2;
-    if(!/\b(BK|IK|AK|IF|Klubb|Wrestling|Brottning|Atlet|Stadslag|AIR|Thor)\b/i.test(v)) s+=1;
-    return s;
-  }
-  function clubScore(v){
-    let s=0;
-    if(/\b(BK|IK|AK|IF|Klubb|Wrestling|Brottning|Atlet|Stadslag|AIR|Thor|Sparta|Ore|Pan|Viking)\b/i.test(v)) s+=2;
-    if(v.length>=3) s+=1;
-    return s;
+  if(blocks.length>=2){
+    return {
+      matchNumber,
+      redName:blocks[0].name,
+      redClub:blocks[0].club,
+      blueName:blocks[1].name,
+      blueClub:blocks[1].club
+    };
   }
 
-  let best=null, bestScore=-1;
-  for(let i=0;i+3<candidates.length;i++){
-    const a=candidates[i], b=candidates[i+1], c=candidates[i+2], d=candidates[i+3];
-    const score=nameScore(a)+clubScore(b)+nameScore(c)+clubScore(d);
-    if(score>bestScore){
-      bestScore=score;
-      best={matchNumber,redName:a,redClub:b,blueName:c,blueClub:d};
-    }
-  }
-  return bestScore>=6 ? best : null;
+  return null;
 }
-
 function parseMatchPage(html){
   const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
   const matches=[];
@@ -282,7 +286,7 @@ async function allMatches(indexUrl){
 
   return {
     matches:[...result.values()].sort((a,b)=>a.matchNumber-b.matchNumber),
-    debug:{matchListCount:links.length, textExportFound:Boolean(txtUrl), parsedMatches:result.size, firstMatchList:links[0]||""}
+    debug:{matchListCount:links.length, textExportFound:Boolean(txtUrl), parsedMatches:result.size, firstMatchList:links[0]||"", sample:[...result.values()].slice(0,3)}
   };
 }
 
