@@ -247,6 +247,10 @@
       state.tournament = {name: option.dataset.name || option.textContent, url: option.value};
       state.matches = {};
       (data.matches || []).forEach(m=>{ state.matches[String(m.matchNumber)] = m; });
+      if(Object.keys(state.matches).length === 0){
+        const info = data.debug ? ` (${data.debug.matchListCount || 0} matchlistor hittades)` : "";
+        throw new Error("Inga matcher kunde läsas"+info);
+      }
       try{
         localStorage.setItem("brottarklocka_tournament", JSON.stringify({
           tournament:state.tournament, matches:state.matches
