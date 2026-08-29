@@ -1,4 +1,4 @@
-const OVERVIEW = "https://www.ringerdb.de/se/turniere/turnieruebersicht.aspx?Saison=2026&Land=SE&TurnierTyp=-1";
+const OVERVIEW = "https://www.ringerdb.de/no/turniere/turnieruebersicht.aspx?Saison=2026&Land=SE&TurnierTyp=-1";
 
 function decodeEntities(s=""){
   return s
@@ -57,52 +57,47 @@ async function getText(url){
 }
 
 function parseTournaments(html){
-  const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
   const out=[];
-  for(const row of rows){
-    const cells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>m[1]);
-    if(cells.length<2) continue;
-
-    const links=[...row.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
-    const classic=links.find(x=>
-      /turniereklassisch\.ringerdb\.de/i.test(x[1]) ||
-      /\/VT\/20\d\d\/SE\//i.test(x[1]) ||
-      /indexSWE\.htm/i.test(x[1])
-    );
-    if(!classic) continue;
-
-    const name=strip(classic[2]);
-    const date=strip(cells[0]);
-    const place=cells.length>2 ? strip(cells[2]) : "";
-    const url=absolute(classic[1],OVERVIEW);
-
-    if(name && url) out.push({name,date,place,url});
-  }
-
   const seen=new Set();
-  return out.filter(t=>!seen.has(t.url) && seen.add(t.url));
-}
 
-function looksLikeNoise(s){
-  const x=s.trim();
-  if(!x) return true;
-  if(/^(match|matchnr|matchnummer|nr|matta|mat|lista|matchlista|start|resultat|result|poäng|points?)$/i.test(x)) return true;
-  if(/^(GR|FS|WW)\s*\d+/i.test(x)) return true;
-  if(/^\d+\s*(kg)?$/i.test(x)) return true;
-  if(/^\d{1,2}[:.]\d{2}$/.test(x)) return true;
-  if(/^[0-9]+\s*[:\-]\s*[0-9]+$/.test(x)) return true;
-  if(/^(VFA|VSU|VPO|VIN|DSQ|EVT|KL|N|Omg\.?|Runde|Round)$/i.test(x)) return true;
-  return false;
-}
+  const linkRe=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
 
-function splitPersonBlock(s){
-  const parts=s.split("\n").map(x=>x.trim()).filter(Boolean);
-  if(parts.length>=2){
-    return {name:parts[0], club:parts.slice(1).join(" ")};
+  while((m=linkRe.exec(html))!==null){
+    const href=decodeEntities(m[1]);
+    const name=strip(m[2]);
+    if(!name) continue;
+
+    const isClassic =
+      /turniereklassisch\.ringerdb\.de/i.test(href) ||
+      /\/(?:DM|VT)\/2026\/SE\//i.test(href);
+
+    if(!isClassic) continue;
+
+    const url=absolute(href,OVERVIEW);
+    if(!url || seen.has(url)) continue;
+
+    let date="";
+    let place="";
+    const rowStart=html.lastIndexOf("<tr",m.index);
+    const rowEnd=html.indexOf("</tr>",m.index);
+
+    if(rowStart>=0 && rowEnd>rowStart){
+      const row=html.slice(rowStart,rowEnd+5);
+      const cells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(x=>strip(x[1]));
+      if(cells.length){
+        const dateCell=cells.find(x=>/\d{2}\.\d{2}\.2026/.test(x) || /\d{2}\.-\d{2}\.\d{2}\.2026/.test(x));
+        if(dateCell) date=dateCell;
+        if(cells.length>=3) place=cells[2] || "";
+      }
+    }
+
+    seen.add(url);
+    out.push({name,date,place,url});
   }
-  return null;
-}
 
+  return out;
+}
 function parseRowFlexible(row){
   const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>strip(m[1]));
   if(rawCells.length<3) return null;
