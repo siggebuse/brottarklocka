@@ -1,4 +1,4 @@
-const OVERVIEW = "https://www.ringerdb.de/no/turniere/turnieruebersicht.aspx?Saison=2026&Land=SE&TurnierTyp=-1";
+const OVERVIEW = "https://www.ringerdb.de/se/turniere/turnieruebersicht.aspx?Saison=2026&Land=SE&TurnierTyp=-1";
 
 function decodeEntities(s=""){
   return s
@@ -30,74 +30,33 @@ function absolute(href,base){
   try { return new URL(href,base).href; } catch { return ""; }
 }
 
-async function getBuffer(url){
-  const r = await fetch(url,{
-    headers:{
-      "user-agent":"Mozilla/5.0 (Brottarklocka; RingerDB reader)",
-      "accept":"text/html,text/plain,*/*"
-    }
-  });
-  if(!r.ok) throw new Error("HTTP "+r.status+" för "+url);
-  return Buffer.from(await r.arrayBuffer());
-}
-
-function decodeBuffer(buf){
-  // RingerDB/Turnierverwaltung pages and exports can use older Western-European encodings.
-  for(const enc of ["utf-8","windows-1252","iso-8859-1"]){
-    try{
-      const text = new TextDecoder(enc,{fatal:true}).decode(buf);
-      if(text) return text;
-    }catch{}
-  }
-  return buf.toString("latin1");
-}
-
 async function getText(url){
-  return decodeBuffer(await getBuffer(url));
+  const r = await fetch(url,{headers:{"user-agent":"Mozilla/5.0 Brottarklocka/1.0"}});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const buf=Buffer.from(await r.arrayBuffer());
+  let text=buf.toString("utf8");
+  if(text.includes("\uFFFD")) text=buf.toString("latin1");
+  return text;
 }
 
 function parseTournaments(html){
+  const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
   const out=[];
-  const seen=new Set();
-
-  const linkRe=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-  let m;
-
-  while((m=linkRe.exec(html))!==null){
-    const href=decodeEntities(m[1]);
-    const name=strip(m[2]);
-    if(!name) continue;
-
-    const isClassic =
-      /turniereklassisch\.ringerdb\.de/i.test(href) ||
-      /\/(?:DM|VT)\/2026\/SE\//i.test(href);
-
-    if(!isClassic) continue;
-
-    const url=absolute(href,OVERVIEW);
-    if(!url || seen.has(url)) continue;
-
-    let date="";
-    let place="";
-    const rowStart=html.lastIndexOf("<tr",m.index);
-    const rowEnd=html.indexOf("</tr>",m.index);
-
-    if(rowStart>=0 && rowEnd>rowStart){
-      const row=html.slice(rowStart,rowEnd+5);
-      const cells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(x=>strip(x[1]));
-      if(cells.length){
-        const dateCell=cells.find(x=>/\d{2}\.\d{2}\.2026/.test(x) || /\d{2}\.-\d{2}\.\d{2}\.2026/.test(x));
-        if(dateCell) date=dateCell;
-        if(cells.length>=3) place=cells[2] || "";
-      }
-    }
-
-    seen.add(url);
-    out.push({name,date,place,url});
+  for(const row of rows){
+    const cells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>m[1]);
+    if(cells.length<2) continue;
+    const links=[...row.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
+    const classic=links.find(x=>/turniereklassisch\.ringerdb\.de/i.test(x[1]) || /indexSWE\.htm/i.test(x[1]));
+    if(!classic) continue;
+    const name=strip(classic[2]), date=strip(cells[0]), place=cells.length>2?strip(cells[2]):"";
+    const url=absolute(classic[1],OVERVIEW);
+    if(name && url) out.push({name,date,place,url});
   }
-
-  return out;
+  const seen=new Set();
+  return out.filter(t=>!seen.has(t.url) && seen.add(t.url));
 }
+
+
 function parseRowFlexible(row){
   const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>strip(m[1]));
   if(rawCells.length<3) return null;
@@ -295,7 +254,13 @@ export async function handler(event){
           "content-type":"application/json; charset=utf-8",
           "cache-control":"public,max-age=900"
         },
-        body:JSON.stringify({tournaments:parseTournaments(html)})
+        body:JSON.stringify({
+          tournaments:parseTournaments(html),
+          debug:{
+            htmlLength:html.length,
+            hasClassicLinks:/turniereklassisch\.ringerdb\.de/i.test(html)
+          }
+        })
       };
     }
 
