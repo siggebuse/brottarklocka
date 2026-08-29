@@ -218,7 +218,7 @@
     els.tournamentStatus.textContent = "Hämtar tävlingar från RingerDB…";
     els.tournamentSelect.innerHTML = "";
     try{
-      const r = await fetch("/.netlify/functions/ringerdb?mode=tournaments");
+      const r = await fetch("/.netlify/functions/ringerdb?mode=tournaments&_="+Date.now(), {cache:"no-store"});
       if(!r.ok) throw new Error("Serverfel");
       const data = await r.json();
       (data.tournaments || []).forEach(t=>{
@@ -229,6 +229,9 @@
         els.tournamentSelect.appendChild(o);
       });
       els.tournamentStatus.textContent = `${(data.tournaments || []).length} tävlingar hittades`;
+      if((data.tournaments || []).length > 0){
+        els.tournamentSelect.selectedIndex = 0;
+      }
     }catch(e){
       els.tournamentStatus.textContent = "Kunde inte hämta tävlingslistan. Webbappen måste publiceras med Netlify Functions.";
     }
@@ -241,7 +244,7 @@
     els.tournamentLoad.disabled = true;
     try{
       const u = encodeURIComponent(option.value);
-      const r = await fetch("/.netlify/functions/ringerdb?mode=matches&url="+u);
+      const r = await fetch("/.netlify/functions/ringerdb?mode=matches&url="+u+"&_="+Date.now(), {cache:"no-store"});
       if(!r.ok) throw new Error("Kunde inte läsa matchlista");
       const data = await r.json();
       state.tournament = {name: option.dataset.name || option.textContent, url: option.value};
