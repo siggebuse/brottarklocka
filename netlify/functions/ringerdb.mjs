@@ -57,6 +57,27 @@ function parseTournaments(html){
 }
 
 
+function looksLikeNoise(s=""){
+  const x=String(s).trim();
+  if(!x) return true;
+  if(/^(match|matchnr|matchnummer|nr|matta|mat|lista|matchlista|start|resultat|result|poäng|points?)$/i.test(x)) return true;
+  if(/^(GR|FS|WW)\s*\d+/i.test(x)) return true;
+  if(/^\d+\s*(kg)?$/i.test(x)) return true;
+  if(/^\d{1,2}[:.]\d{2}$/.test(x)) return true;
+  if(/^[0-9]+\s*[:\-]\s*[0-9]+$/.test(x)) return true;
+  if(/^(VFA|VSU|VPO|VIN|DSQ|EVT|KL|N|Omg\.?|Runde|Round)$/i.test(x)) return true;
+  return false;
+}
+
+function splitPersonBlock(s=""){
+  const parts=String(s).split("\n").map(x=>x.trim()).filter(Boolean);
+  if(parts.length>=2){
+    return {name:parts[0], club:parts.slice(1).join(" ")};
+  }
+  return null;
+}
+
+
 function parseRowFlexible(row){
   const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>strip(m[1]));
   if(rawCells.length<3) return null;
@@ -249,7 +270,7 @@ async function allMatches(indexUrl){
   for(let i=0;i<links.length;i+=4){
     const pages=await Promise.all(
       links.slice(i,i+4).map(async u=>{
-        try{return await getText(u)}catch{return ""}
+        try{return await getText(u)}catch(e){ return "<!-- FETCH_ERROR:"+String(e.message||e)+" -->"; }
       })
     );
     for(const p of pages){
