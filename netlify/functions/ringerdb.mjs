@@ -152,16 +152,94 @@ function parseRowFlexible(row){
 
   return null;
 }
-function parseMatchPage(html){
-  const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
-  const matches=[];
-  for(const row of rows){
-    const m=parseRowFlexible(row);
-    if(m) matches.push(m);
-  }
-  return matches;
+function htmlToLines(html){
+  return decodeEntities(
+    String(html)
+      .replace(/<script\b[\s\S]*?<\/script>/gi,"")
+      .replace(/<style\b[\s\S]*?<\/style>/gi,"")
+      .replace(/<(?:br|\/p|\/div|\/tr|\/td|\/th|li)\b[^>]*>/gi,"\n")
+      .replace(/<[^>]*>/g," ")
+  )
+    .replace(/\r/g,"")
+    .split("\n")
+    .map(x=>x.replace(/\s+/g," ").trim())
+    .filter(Boolean);
 }
 
+function isResultLike(x){
+  return /^\(?\s*\d+\s*:\s*\d+\s*\)?$/.test(x) ||
+         /^(VFA|VSU|VPO|VIN|VFO|DSQ|EVT)$/i.test(x);
+}
+
+function isCategoryLike(x){
+  return /^(GR|FS|WW)\d+\s*-\s*\d+\s*kg\b/i.test(x);
+}
+
+function isListNoise(x){
+  return /^Lista\s+\d+$/i.test(x) ||
+         /^Matchlista\s+\d+$/i.test(x) ||
+         /^Se gruppstatus/i.test(x) ||
+         /^Laddar/i.test(x) ||
+         /^(N\/A|🇸🇪|🇩🇰)$/i.test(x);
+}
+
+function parseMatchPageText(html){
+  const lines=htmlToLines(html);
+  const out=[];
+
+  for(let i=0;i<lines.length;i++){
+    if(!/^\d{1,4}$/.test(lines[i])) continue;
+    const matchNumber=Number(lines[i]);
+    if(matchNumber<1 || matchNumber>5000) continue;
+
+    // From the match number, scan forward until result/category begins.
+    const segment=[];
+    for(let j=i+1;j<Math.min(lines.length,i+24);j++){
+      const x=lines[j];
+      if(isResultLike(x) || isCategoryLike(x)) break;
+      if(isListNoise(x)) continue;
+      segment.push(x);
+    }
+
+    // Expected useful order after removing flags/list labels:
+    // red name, red club, blue name, blue club
+    if(segment.length>=4){
+      const redName=segment[0];
+      const redClub=segment[1];
+      const blueName=segment[2];
+      const blueClub=segment[3];
+
+      if(
+        redName && redClub && blueName && blueClub &&
+        !looksLikeNoise(redName) && !looksLikeNoise(redClub) &&
+        !looksLikeNoise(blueName) && !looksLikeNoise(blueClub)
+      ){
+        out.push({matchNumber,redName,redClub,blueName,blueClub});
+      }
+    }
+  }
+
+  return out;
+}
+
+function parseMatchPage(html){
+  const result=new Map();
+
+  const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
+  for(const row of rows){
+    try{
+      const m=parseRowFlexible(row);
+      if(m && !result.has(m.matchNumber)) result.set(m.matchNumber,m);
+    }catch{}
+  }
+
+  // Robust fallback for RingerDB pages whose HTML table markup varies.
+  for(const m of parseMatchPageText(html)){
+    if(!result.has(m.matchNumber)) result.set(m.matchNumber,m);
+  }
+
+  return [...result.values()];
+}
 function extractAnchors(html){
   const out=[];
   // Supports href="x", href='x' and href=x
@@ -284,9 +362,24 @@ async function allMatches(indexUrl){
     }
   }
 
+  let firstPageLines=[];
+  if(result.size===0 && links[0]){
+    try{
+      const dbg=await getText(links[0]);
+      firstPageLines=htmlToLines(dbg).slice(0,80);
+    }catch{}
+  }
+
   return {
     matches:[...result.values()].sort((a,b)=>a.matchNumber-b.matchNumber),
-    debug:{matchListCount:links.length, textExportFound:Boolean(txtUrl), parsedMatches:result.size, firstMatchList:links[0]||"", sample:[...result.values()].slice(0,3)}
+    debug:{
+      matchListCount:links.length,
+      textExportFound:Boolean(txtUrl),
+      parsedMatches:result.size,
+      firstMatchList:links[0]||"",
+      sample:[...result.values()].slice(0,3),
+      firstPageLines
+    }
   };
 }
 
