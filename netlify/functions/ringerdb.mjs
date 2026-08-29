@@ -81,76 +81,52 @@ function splitPersonBlock(s=""){
 function parseRowFlexible(row){
   const rawCells=[...row.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m=>m[1]);
   const cells=rawCells.map(c=>strip(c));
-  if(cells.length<5) return null;
+  if(cells.length<4) return null;
 
-  // Matchnumret ligger i början av raden.
-  let matchNumber=null;
-  for(let i=0;i<Math.min(cells.length,4);i++){
-    const m=cells[i].match(/^\s*(\d{1,4})\s*$/);
-    if(m){
-      const n=Number(m[1]);
-      if(n>=1 && n<=5000){ matchNumber=n; break; }
-    }
-  }
-  if(matchNumber==null) return null;
+  // RingerDB lägger ofta matchnummer och vikt i SAMMA första cell:
+  // exempelvis "1\n79 kg". Läs därför endast den inledande siffran
+  // från första cellen. Detta hindrar att omgångsnummer feltolkas
+  // som matchnummer.
+  const first = cells[0] || "";
+  const mm = first.match(/^\s*(\d{1,4})(?:\s|$)/);
+  if(!mm) return null;
 
-  // I RingerDB:s matchlistor är brottarnamnen klickbara länkar.
-  // Vi letar därför efter de två celler som innehåller en <a>-tagg
-  // och läser "namn + klubb" ur just dessa celler.
+  const matchNumber=Number(mm[1]);
+  if(matchNumber<1 || matchNumber>5000) return null;
+
+  // Hitta de två brottarcellerna. De innehåller normalt två textrader:
+  // namn på första raden, klubb på andra raden.
   const people=[];
-  for(let i=0;i<rawCells.length;i++){
-    if(!/<a\b/i.test(rawCells[i])) continue;
 
+  for(let i=1;i<rawCells.length;i++){
     const text=strip(rawCells[i]);
     const lines=text.split("\n").map(x=>x.trim()).filter(Boolean);
     if(lines.length<2) continue;
 
-    // Första raden är normalt brottarens namn, resterande är klubb/distrikt.
     const name=lines[0];
     const club=lines.slice(1).join(" ");
 
+    // Sortera bort pool/omgång, resultat och annan metadata.
     if(!name || !club) continue;
+    if(/^[A-Z]?\d+\s*-\s*[A-Z]?\d+$/i.test(name)) continue;
+    if(/^(N\s*)?Omg\.?\s*\d+$/i.test(club)) continue;
+    if(/^\d+\s*(kg)?$/i.test(name)) continue;
+    if(isResultLike(name) || isResultLike(club)) continue;
+    if(isCategoryLike(name) || isCategoryLike(club)) continue;
     if(looksLikeNoise(name) || looksLikeNoise(club)) continue;
 
     people.push({name,club});
   }
 
-  if(people.length>=2){
-    return {
-      matchNumber,
-      redName:people[0].name,
-      redClub:people[0].club,
-      blueName:people[1].name,
-      blueClub:people[1].club
-    };
-  }
+  if(people.length<2) return null;
 
-  // Fallback för sidor där namnen inte är länkar:
-  // hitta celler som tydligt innehåller "namn<br>klubb".
-  const blocks=[];
-  for(const raw of rawCells){
-    const b=splitPersonBlock(strip(raw));
-    if(!b) continue;
-    if(looksLikeNoise(b.name) || looksLikeNoise(b.club)) continue;
-
-    // Undvik pool/omgång som "N2-N1 / N Omg. 2".
-    if(/^[A-Z]?\d+\s*-\s*[A-Z]?\d+$/i.test(b.name)) continue;
-    if(/\bOmg\.?\b/i.test(b.club)) continue;
-
-    blocks.push(b);
-  }
-
-  if(blocks.length>=2){
-    return {
-      matchNumber,
-      redName:blocks[0].name,
-      redClub:blocks[0].club,
-      blueName:blocks[1].name,
-      blueClub:blocks[1].club
-    };
-  }
-
-  return null;
+  return {
+    matchNumber,
+    redName:people[0].name,
+    redClub:people[0].club,
+    blueName:people[1].name,
+    blueClub:people[1].club
+  };
 }
 function htmlToLines(html){
   return decodeEntities(
@@ -233,9 +209,11 @@ function parseMatchPage(html){
     }catch{}
   }
 
-  // Robust fallback for RingerDB pages whose HTML table markup varies.
-  for(const m of parseMatchPageText(html)){
-    if(!result.has(m.matchNumber)) result.set(m.matchNumber,m);
+  // Endast nödfallback om tabellparsern inte hittade en enda riktig match.
+  if(result.size===0){
+    for(const m of parseMatchPageText(html)){
+      if(!result.has(m.matchNumber)) result.set(m.matchNumber,m);
+    }
   }
 
   return [...result.values()];
@@ -378,7 +356,8 @@ async function allMatches(indexUrl){
       parsedMatches:result.size,
       firstMatchList:links[0]||"",
       sample:[...result.values()].slice(0,3),
-      firstPageLines
+      firstPageLines,
+      parserVersion:"MATCHNUMBERFIX-1"
     }
   };
 }
