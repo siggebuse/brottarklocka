@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#000000" />
+  <title>Brottarklocka</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <button id="tournamentBtn" class="small tournament">VÄLJ TÄVLING</button>
+      <div class="match-length">
+        <span class="label">MATCHTID</span>
+        <button id="btn4" class="small active">4 MIN</button>
+        <button id="btn6" class="small">6 MIN</button>
+      </div>
+      <button id="publicBtn" class="small public">PUBLIKSKÄRM</button>
+    </header>
+
+    <main class="layout">
+      <section class="side red-side">
+        <div class="wrestler-info red-info">
+          <div id="redName" class="wrestler-name">—</div>
+          <div id="redClub" class="wrestler-club">—</div>
+        </div>
+        <div class="score-box red-border">
+          <div id="redScore" class="seven score red">0</div>
+        </div>
+
+        <div class="warnings">
+          <div class="warning-title red">VARNINGAR</div>
+          <div id="redWarnings" class="dots"></div>
+        </div>
+
+        <div class="side-controls">
+          <div class="row score-buttons">
+            <button class="red-btn" data-side="red" data-points="1">+1</button>
+            <button class="red-btn" data-side="red" data-points="2">+2</button>
+            <button class="red-btn" data-side="red" data-points="4">+4</button>
+            <button class="red-btn" id="redMinus">−1</button>
+          </div>
+          <div class="row">
+            <button class="red-btn wide" id="redWarnPlus">+ VARNING</button>
+            <button class="red-btn wide" id="redWarnMinus">− VARNING</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="center">
+        <div class="match-number">
+          <div class="label small-label">MATCHNUMMER</div>
+          <div class="match-number-row">
+            <button id="matchMinus" class="gray">−1</button>
+            <input id="matchNumber" inputmode="numeric" pattern="[0-9]*" value="1" aria-label="Matchnummer">
+            <button id="matchPlus" class="gray">+1</button>
+          </div>
+        </div>
+
+        <div id="clock" class="seven clock">00:00</div>
+        <div id="status" class="status">KLAR</div>
+        <div id="period" class="period">PERIOD 1 / 2</div>
+
+        <div class="center-controls">
+          <button id="startStop" class="start">STARTA</button>
+          <div class="row">
+            <button id="minusSec" class="gray wide">−1 SEK</button>
+            <button id="plusSec" class="gray wide">+1 SEK</button>
+          </div>
+          <button id="elapsedBtn" class="yellow">VISA MATCHTID</button>
+          <button id="resetBtn" class="gray reset">ÅTERSTÄLL</button>
+        </div>
+      </section>
+
+      <section class="side blue-side">
+        <div class="wrestler-info blue-info">
+          <div id="blueName" class="wrestler-name">—</div>
+          <div id="blueClub" class="wrestler-club">—</div>
+        </div>
+        <div class="score-box blue-border">
+          <div id="blueScore" class="seven score blue">0</div>
+        </div>
+
+        <div class="warnings">
+          <div class="warning-title blue">VARNINGAR</div>
+          <div id="blueWarnings" class="dots"></div>
+        </div>
+
+        <div class="side-controls">
+          <div class="row score-buttons">
+            <button class="blue-btn" data-side="blue" data-points="1">+1</button>
+            <button class="blue-btn" data-side="blue" data-points="2">+2</button>
+            <button class="blue-btn" data-side="blue" data-points="4">+4</button>
+            <button class="blue-btn" id="blueMinus">−1</button>
+          </div>
+          <div class="row">
+            <button class="blue-btn wide" id="blueWarnPlus">+ VARNING</button>
+            <button class="blue-btn wide" id="blueWarnMinus">− VARNING</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="tournamentDialog" class="dialog hidden" role="dialog" aria-modal="true">
+    <div class="dialog-card tournament-card">
+      <h2>VÄLJ TÄVLING</h2>
+      <div id="tournamentStatus" class="load-status">Hämtar tävlingar…</div>
+      <select id="tournamentSelect"></select>
+      <div class="row">
+        <button id="tournamentCancel" class="gray wide">AVBRYT</button>
+        <button id="tournamentLoad" class="yellow wide">VÄLJ</button>
+      </div>
+      <div class="ringer-note">Källa: RingerDB, svenska tävlingar 2026</div>
+    </div>
+  </div>
+
+  <div id="dialog" class="dialog hidden" role="dialog" aria-modal="true">
+    <div class="dialog-card">
+      <h2>MATCHTID</h2>
+      <p id="dialogText"></p>
+      <button id="dialogClose" class="yellow">OK</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
