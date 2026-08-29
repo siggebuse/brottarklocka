@@ -1,5 +1,5 @@
-const CACHE="brottarklocka-ringerdb-v6";
-const ASSETS=["./","index.html","style.css","app.js?v=6","public.html","manifest.webmanifest","icon.svg"];
+const CACHE="brottarklocka-ringerdb-v7";
+const ASSETS=["./","index.html","style.css","app.js?v=7","public.html","manifest.webmanifest","icon.svg"];
 
 self.addEventListener("install", event => {
   self.skipWaiting();
