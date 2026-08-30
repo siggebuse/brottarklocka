@@ -1,4 +1,8 @@
-const OVERVIEW = "https://www.ringerdb.de/se/turniere/turnieruebersicht.aspx?Saison=2026&Land=SE&TurnierTyp=-1";
+function overviewUrl(year="2026", country="SE"){
+  const y = /^\d{4}$/.test(String(year)) ? String(year) : "2026";
+  const c = /^[A-Z]{2}$/.test(String(country).toUpperCase()) ? String(country).toUpperCase() : "SE";
+  return `https://www.ringerdb.de/no/turniere/turnieruebersicht.aspx?Saison=${encodeURIComponent(y)}&Land=${encodeURIComponent(c)}&TurnierTyp=-1`;
+}
 
 function decodeEntities(s=""){
   return s
@@ -39,7 +43,7 @@ async function getText(url){
   return text;
 }
 
-function parseTournaments(html){
+function parseTournaments(html, baseUrl){
   const rows=[...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(m=>m[1]);
   const out=[];
   for(const row of rows){
@@ -49,7 +53,7 @@ function parseTournaments(html){
     const classic=links.find(x=>/turniereklassisch\.ringerdb\.de/i.test(x[1]) || /indexSWE\.htm/i.test(x[1]));
     if(!classic) continue;
     const name=strip(classic[2]), date=strip(cells[0]), place=cells.length>2?strip(cells[2]):"";
-    const url=absolute(classic[1],OVERVIEW);
+    const url=absolute(classic[1],baseUrl);
     if(name && url) out.push({name,date,place,url});
   }
   const seen=new Set();
@@ -367,7 +371,10 @@ export async function handler(event){
     const mode=event.queryStringParameters?.mode||"";
 
     if(mode==="tournaments"){
-      const html=await getText(OVERVIEW);
+      const year = event.queryStringParameters?.year || "2026";
+      const country = (event.queryStringParameters?.country || "SE").toUpperCase();
+      const overview = overviewUrl(year, country);
+      const html = await getText(overview);
       return {
         statusCode:200,
         headers:{
@@ -375,7 +382,7 @@ export async function handler(event){
           "cache-control":"public,max-age=900"
         },
         body:JSON.stringify({
-          tournaments:parseTournaments(html),
+          tournaments:parseTournaments(html, overview),
           debug:{
             htmlLength:html.length,
             hasClassicLinks:/turniereklassisch\.ringerdb\.de/i.test(html)

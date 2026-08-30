@@ -218,7 +218,7 @@
     els.tournamentStatus.textContent = "Hämtar tävlingar från RingerDB…";
     els.tournamentSelect.innerHTML = "";
     try{
-      const r = await fetch("/.netlify/functions/ringerdb?mode=tournaments&_="+Date.now(), {cache:"no-store"});
+      const r = await fetch(`/.netlify/functions/ringerdb?mode=tournaments&year=${encodeURIComponent(els.yearSelect?.value || new Date().getFullYear())}&country=${encodeURIComponent(els.countrySelect?.value || "SE")}&_=${Date.now()}`, {cache:"no-store"});
       if(!r.ok) throw new Error("Serverfel");
       const data = await r.json();
       (data.tournaments || []).forEach(t=>{
@@ -347,3 +347,45 @@
 
   render();
 })();
+
+function initTournamentFilters(){
+  if(!els.yearSelect || !els.countrySelect) return;
+
+  const currentYear = new Date().getFullYear();
+  els.yearSelect.innerHTML = "";
+
+  for(let y=currentYear+1; y>=2007; y--){
+    const option = document.createElement("option");
+    option.value = String(y);
+    option.textContent = String(y);
+    if(y === currentYear) option.selected = true;
+    els.yearSelect.appendChild(option);
+  }
+
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem("brottarklocka_filter") || "null");
+  } catch {}
+
+  if(saved){
+    if(saved.year && [...els.yearSelect.options].some(o => o.value === String(saved.year))){
+      els.yearSelect.value = String(saved.year);
+    }
+    if(saved.country && [...els.countrySelect.options].some(o => o.value === saved.country)){
+      els.countrySelect.value = saved.country;
+    }
+  }
+
+  const reload = ()=>{
+    localStorage.setItem("brottarklocka_filter", JSON.stringify({
+      year: els.yearSelect.value,
+      country: els.countrySelect.value
+    }));
+    loadTournaments();
+  };
+
+  els.yearSelect.addEventListener("change", reload);
+  els.countrySelect.addEventListener("change", reload);
+}
+
+initTournamentFilters();
