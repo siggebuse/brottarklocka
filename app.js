@@ -219,7 +219,12 @@
     els.tournamentStatus.textContent = "Hämtar tävlingar från RingerDB…";
     els.tournamentSelect.innerHTML = "";
     try{
-      const r = await fetch("/.netlify/functions/ringerdb?mode=tournaments&_="+Date.now(), {cache:"no-store"});
+      const year = els.yearSelect?.value || String(new Date().getFullYear());
+      const country = els.countrySelect?.value || "SE";
+      const r = await fetch(
+        `/.netlify/functions/ringerdb?mode=tournaments&year=${encodeURIComponent(year)}&country=${encodeURIComponent(country)}&_=${Date.now()}`,
+        {cache:"no-store"}
+      );
       if(!r.ok) throw new Error("Serverfel");
       const data = await r.json();
       (data.tournaments || []).forEach(t=>{

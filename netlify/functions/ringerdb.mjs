@@ -384,6 +384,9 @@ export async function handler(event){
         body:JSON.stringify({
           tournaments:parseTournaments(html, overview),
           debug:{
+            requestedYear:year,
+            requestedCountry:country,
+            overviewUrl:overview,
             htmlLength:html.length,
             hasClassicLinks:/turniereklassisch\.ringerdb\.de/i.test(html)
           }
