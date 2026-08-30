@@ -142,14 +142,14 @@ button.tournament { position:absolute; left:0; min-width:130px; background:#222;
 .tournament-filters{
   display:flex;
   gap:12px;
-  margin-bottom:12px;
+  margin:12px 0;
 }
 .tournament-filters label{
   flex:1;
   display:flex;
   flex-direction:column;
   gap:6px;
-  font-size:14px;
+  font-size:15px;
   font-weight:700;
 }
 .tournament-filters select{
@@ -157,4 +157,6 @@ button.tournament { position:absolute; left:0; min-width:130px; background:#222;
   font-size:20px;
   padding:10px;
   border-radius:8px;
+  background:#fff;
+  color:#000;
 }
