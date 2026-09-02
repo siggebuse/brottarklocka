@@ -15,7 +15,7 @@ html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family
 .person{position:relative;border:6px solid;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .redp{border-color:#f20}.bluep{border-color:#173cff}
 .club{font-size:4.6vh;font-style:italic;font-weight:800;margin-bottom:5vh;text-align:center}
-.name{font-size:4.6vh;font-style:italic;font-weight:900;text-align:center}
+.name{font-size:6.2vh;font-style:italic;font-weight:900;text-align:center}
 .warn{position:absolute;top:-9.5vh;left:50%;transform:translateX(-50%);display:none;font-size:8vh;line-height:1;font-style:italic;font-weight:900;background:transparent;border:0}
 .redp .warn{color:#f20}.bluep .warn{color:#173cff}
 .bottom{display:grid;grid-template-columns:28.5vw 1fr 28.5vw;gap:1.8vw}
@@ -72,6 +72,13 @@ function renderWarning(el,value){
  el.textContent=visible?String(n):"";
  el.style.display=visible?"block":"none";
 }
+function displayName(name){
+ const text=String(name||"").trim();
+ if(!text)return "—";
+ const parts=text.split(/\s+/);
+ if(parts.length<=2)return text;
+ return parts[0]+" "+parts[1];
+}
 function apply(s){
  if(!s)return;
  $("matchNumber").textContent=s.matchNumber||"1";
@@ -79,8 +86,8 @@ function apply(s){
  renderWarning($("redWarnings"),s.redWarnings);renderWarning($("blueWarnings"),s.blueWarnings);
  const remaining = Number.isFinite(Number(s.remaining)) ? Number(s.remaining) : Math.max(0, Number(s.matchLength||4)*60-Number(s.elapsed||0));
  digitalClock($("clock"),fmt(remaining));
- $("redName").textContent=s.redName||"—";$("redClub").textContent=s.redClub||"—";
- $("blueName").textContent=s.blueName||"—";$("blueClub").textContent=s.blueClub||"—";
+ $("redName").textContent=displayName(s.redName);$("redClub").textContent=s.redClub||"—";
+ $("blueName").textContent=displayName(s.blueName);$("blueClub").textContent=s.blueClub||"—";
 }
 try{apply(JSON.parse(localStorage.getItem("brottarklocka_state")||"null"))}catch{}
 if("BroadcastChannel" in window){const c=new BroadcastChannel("brottarklocka");c.onmessage=e=>apply(e.data)}

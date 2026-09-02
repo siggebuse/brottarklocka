@@ -38,3 +38,8 @@ V17:
 V18: Publikskärmens varningar visas som röda/blå siffror 1–3 ovanför namnrutan, utan ram. Ingen 0 visas.
 
 V19: S-tangenten fungerar även efter byte 4/6 min. Publikskärm öppnas med popup-fönsterspecifikation och separat fönsternavigering för starkast möjliga popup-beteende.
+
+V20:
+- Publikskärm: vid dubbla efternamn visas bara det första efternamnet.
+- Publikskärm: namntexten är större; klubbtexten är oförändrad.
+- Hjälptext uppdaterad med "browserfönster eller flik".
