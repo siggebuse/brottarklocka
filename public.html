@@ -1,93 +1,120 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <meta name="theme-color" content="#000000" />
-  <title>Brottarklocka – publikskärm</title>
-  <style>
-    *{box-sizing:border-box}
-    html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden}
-    .screen{height:100vh;padding:2vh 2vw;display:flex;flex-direction:column}
-    .head{display:flex;justify-content:space-between;font-size:4vh;font-weight:900}
-    .red{color:#ff2b2b}.blue{color:#1f6fff}.yellow{color:#ffd900}
-    .match-number{text-align:center;margin-top:1vh}
-    .mn-label{font-size:2.6vh;font-weight:900;margin-bottom:.6vh}
-    .mn-box{display:inline-flex;background:#fff;color:#000;border-radius:1vh;padding:1vh 2vw;min-width:12vw;justify-content:center}
-    .mn-digits{font-family:"Courier New",monospace;font-size:8vh;font-weight:900;line-height:1}
-    .main{flex:1;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:2vw;align-items:center}
-    .score{font-family:"Courier New",monospace;font-size:28vh;line-height:1;font-weight:900;text-align:center}
-    .clock{text-align:center;font-family:"Courier New",monospace;font-weight:900;font-size:18vh;line-height:1;white-space:nowrap}
-    .status{text-align:center;font-size:5vh;font-weight:900;margin-top:2vh}
-    .period{text-align:center;font-size:4vh;font-weight:900;margin-top:1vh}
-    .wrestlers{display:grid;grid-template-columns:1fr 1fr;gap:15vw;padding:1vh 8vw 0}
-    .wrestler{text-align:center}.wname{font-size:4vh;font-weight:900}.wclub{font-size:2.6vh;font-weight:700;color:#ddd;margin-top:.5vh}
-    .tournament{text-align:center;color:#ccc;font-size:2.4vh;font-weight:700;margin-top:.4vh}
-    .warnings{display:grid;grid-template-columns:1fr 1fr;gap:15vw;padding:0 8vw 3vh}
-    .warning{text-align:center}
-    .warning-title{font-size:3vh;font-weight:900;margin-bottom:1vh}
-    .dots{display:flex;gap:2vw;justify-content:center}
-    .dot{width:5vh;height:5vh;border-radius:50%;border:.6vh solid currentColor}
-    .dot.on{background:currentColor}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Brottarklocka – publikskärm</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+.screen{height:100vh;padding:2.5vh 1.8vw;display:grid;grid-template-rows:17vh 46vh 1fr;gap:2vh}
+.top{display:flex;justify-content:center;align-items:center}
+.matchbox{border:1px solid #777;min-width:20vw;height:14vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.matchlabel{font-size:2.8vh;font-weight:800}.matchnum{font-size:8vh;font-style:italic;font-weight:900;line-height:1}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:1.8vw}
+.person{position:relative;border:6px solid;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.redp{border-color:#f20}.bluep{border-color:#173cff}
+.club{font-size:4.6vh;font-style:italic;font-weight:800;margin-bottom:5vh;text-align:center}
+.name{font-size:4.6vh;font-style:italic;font-weight:900;text-align:center}
+.warn{position:absolute;top:-9.5vh;left:50%;transform:translateX(-50%);display:none;font-size:8vh;line-height:1;font-style:italic;font-weight:900;background:transparent;border:0}
+.redp .warn{color:#f20}.bluep .warn{color:#173cff}
+.bottom{display:grid;grid-template-columns:28.5vw 1fr 28.5vw;gap:1.8vw}
+.score{border:6px solid;display:flex;align-items:center;justify-content:center;font-size:25vh;font-style:italic;font-weight:900}
+.redscore{border-color:#f20}.bluescore{border-color:#173cff}
+.center{border:1px solid #777;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+.clock{width:100%;display:flex;align-items:center;justify-content:center;gap:1.9vh;color:#fff400;padding:1vh}
+.digital-digit{position:relative;width:11vh;height:19.5vh;display:inline-block;flex:0 0 auto}
+.segment{position:absolute;display:block;background:#2d2a00;opacity:.34;border-radius:.65vh}
+.segment.on{background:#fff400;opacity:1;box-shadow:0 0 1.5vh rgba(255,244,0,.8)}
+.segment-a,.segment-d,.segment-g{left:1.6vh;width:7.8vh;height:1.45vh}
+.segment-a{top:0}.segment-g{top:9vh}.segment-d{bottom:0}
+.segment-b,.segment-c,.segment-e,.segment-f{width:1.45vh;height:7.6vh}
+.segment-b{right:0;top:1.1vh}.segment-c{right:0;bottom:1.1vh}.segment-f{left:0;top:1.1vh}.segment-e{left:0;bottom:1.1vh}
+.digital-colon{position:relative;width:2.4vh;height:19.5vh;display:inline-block;flex:0 0 auto}
+.digital-colon::before,.digital-colon::after{content:"";position:absolute;left:.45vh;width:1.5vh;height:1.5vh;border-radius:50%;background:#fff400;box-shadow:0 0 1.3vh rgba(255,244,0,.8)}
+.digital-colon::before{top:5.8vh}.digital-colon::after{bottom:5.8vh}
+
+</style>
+
+
 </head>
 <body>
-  <div class="screen">
-    <div class="head"><span class="red">RÖD</span><span id="length">4 MIN MATCH</span><span class="blue">BLÅ</span></div>
-    <div id="tournamentName" class="tournament"></div>
-    <div class="match-number">
-      <div class="mn-label">MATCHNUMMER</div>
-      <div class="mn-box"><div id="matchNumber" class="mn-digits">1</div></div>
-    </div>
-    <div class="main">
-      <div id="redScore" class="score red">0</div>
-      <div>
-        <div id="clock" class="clock yellow">00:00</div>
-        <div id="status" class="status">KLAR</div>
-        <div id="period" class="period">PERIOD 1 / 2</div>
-      </div>
-      <div id="blueScore" class="score blue">0</div>
-    </div>
-    <div class="wrestlers">
-      <div class="wrestler red"><div id="redName" class="wname">—</div><div id="redClub" class="wclub">—</div></div>
-      <div class="wrestler blue"><div id="blueName" class="wname">—</div><div id="blueClub" class="wclub">—</div></div>
-    </div>
-    <div class="warnings">
-      <div class="warning red">
-        <div class="warning-title">VARNINGAR</div>
-        <div id="redWarnings" class="dots"></div>
-      </div>
-      <div class="warning blue">
-        <div class="warning-title">VARNINGAR</div>
-        <div id="blueWarnings" class="dots"></div>
-      </div>
-    </div>
+<div class="screen">
+  <div class="top"><div class="matchbox"><div class="matchlabel">MATCH</div><div id="matchNumber" class="matchnum">1</div></div></div>
+  <div class="people">
+    <div class="person redp"><div id="redWarnings" class="warn" aria-label="Röda varningar"></div><div id="redClub" class="club">—</div><div id="redName" class="name">—</div></div>
+    <div class="person bluep"><div id="blueWarnings" class="warn" aria-label="Blå varningar"></div><div id="blueClub" class="club">—</div><div id="blueName" class="name">—</div></div>
   </div>
+  <div class="bottom">
+    <div id="redScore" class="score redscore">0</div>
+    <div class="center"><div id="clock" class="clock" aria-label="00:00"></div></div>
+    <div id="blueScore" class="score bluescore">0</div>
+  </div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 function fmt(sec){const s=Math.max(0,Math.floor(sec||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
-function dots(el,count){el.innerHTML="";for(let i=0;i<3;i++){const d=document.createElement("div");d.className="dot"+(i<count?" on":"");el.appendChild(d)}}
-function render(s){
-  if(!s)return;
-  $("length").textContent=(s.matchLength===6?"6":"4")+" MIN MATCH";
-  $("matchNumber").textContent=s.matchNumber||"1";
-  $("tournamentName").textContent=s.tournamentName||"";
-  $("redName").textContent=s.redName||"—"; $("redClub").textContent=s.redClub||"—";
-  $("blueName").textContent=s.blueName||"—"; $("blueClub").textContent=s.blueClub||"—";
-  $("redScore").textContent=s.redScore??0; $("blueScore").textContent=s.blueScore??0;
-  $("clock").textContent=fmt(s.elapsed);
-  $("status").textContent=s.status||"KLAR";
-  $("status").style.color=s.finished?"#ffd900":s.running?"#20c75a":(s.status==="PERIODPAUS"?"#ffd900":"#fff");
-  $("period").textContent=`PERIOD ${s.period||1} / 2`;
-  dots($("redWarnings"),s.redWarnings||0); dots($("blueWarnings"),s.blueWarnings||0);
+const segments={0:"abcdef",1:"bc",2:"abdeg",3:"abcdg",4:"bcfg",5:"acdfg",6:"acdefg",7:"abc",8:"abcdefg",9:"abcdfg"};
+function digitalClock(el,value){
+ if(!el || el.dataset.digitalValue===value)return;
+ el.dataset.digitalValue=value;el.setAttribute("aria-label",value);el.innerHTML="";
+ for(const char of value){
+  if(char===":"){const colon=document.createElement("span");colon.className="digital-colon";colon.setAttribute("aria-hidden","true");el.appendChild(colon);continue}
+  const digit=document.createElement("span");digit.className="digital-digit";digit.setAttribute("aria-hidden","true");
+  const active=segments[char]||"";
+  for(const name of "abcdefg"){const segment=document.createElement("i");segment.className=`segment segment-${name}${active.includes(name)?" on":""}`;digit.appendChild(segment)}
+  el.appendChild(digit);
+ }
 }
-if("BroadcastChannel" in window){
-  const ch=new BroadcastChannel("brottarklocka");
-  ch.onmessage=e=>render(e.data);
+function renderWarning(el,value){
+ const n=Number.parseInt(value,10);
+ const visible=n>=1 && n<=3;
+ el.textContent=visible?String(n):"";
+ el.style.display=visible?"block":"none";
 }
-window.addEventListener("storage",e=>{if(e.key==="brottarklocka_state")try{render(JSON.parse(e.newValue))}catch(_){}});
-setInterval(()=>{try{render(JSON.parse(localStorage.getItem("brottarklocka_state")))}catch(_){}},500);
-try{render(JSON.parse(localStorage.getItem("brottarklocka_state")))}catch(_){}
+function apply(s){
+ if(!s)return;
+ $("matchNumber").textContent=s.matchNumber||"1";
+ $("redScore").textContent=s.redScore??0;$("blueScore").textContent=s.blueScore??0;
+ renderWarning($("redWarnings"),s.redWarnings);renderWarning($("blueWarnings"),s.blueWarnings);
+ const remaining = Number.isFinite(Number(s.remaining)) ? Number(s.remaining) : Math.max(0, Number(s.matchLength||4)*60-Number(s.elapsed||0));
+ digitalClock($("clock"),fmt(remaining));
+ $("redName").textContent=s.redName||"—";$("redClub").textContent=s.redClub||"—";
+ $("blueName").textContent=s.blueName||"—";$("blueClub").textContent=s.blueClub||"—";
+}
+try{apply(JSON.parse(localStorage.getItem("brottarklocka_state")||"null"))}catch{}
+if("BroadcastChannel" in window){const c=new BroadcastChannel("brottarklocka");c.onmessage=e=>apply(e.data)}
+window.addEventListener("storage",e=>{if(e.key==="brottarklocka_state"){try{apply(JSON.parse(e.newValue))}catch{}}});
+
+function requestPresentationFullscreen(){
+  try{
+    const el=document.documentElement;
+    if(!document.fullscreenElement && el.requestFullscreen){
+      el.requestFullscreen().catch(()=>{});
+    }else if(!document.webkitFullscreenElement && el.webkitRequestFullscreen){
+      el.webkitRequestFullscreen();
+    }
+  }catch(e){}
+}
+
+if(new URLSearchParams(location.search).get("autofullscreen")==="1"){
+  // Browsern tillåter normalt inte äkta fullscreen utan användarinteraktion.
+  // Gör därför ett försök vid första klick/touch/tangenttryckning.
+  const once=()=>{
+    requestPresentationFullscreen();
+    document.removeEventListener("pointerdown",once);
+    document.removeEventListener("keydown",once);
+  };
+  document.addEventListener("pointerdown",once,{once:true});
+  document.addEventListener("keydown",once,{once:true});
+}
+
+
+window.addEventListener("message",(e)=>{
+  if(e.data && e.data.type==="brottarklocka-focus"){
+    // Behåll presentationsfönstret som separat fönster utan att navigera huvudfönstret.
+  }
+});
+
 </script>
-</body>
-</html>
+</body></html>

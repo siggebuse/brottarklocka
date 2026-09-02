@@ -25,31 +25,65 @@
     redWarnings:$("redWarnings"), blueWarnings:$("blueWarnings"),
     clock:$("clock"), status:$("status"), period:$("period"),
     startStop:$("startStop"), minusSec:$("minusSec"), plusSec:$("plusSec"),
-    elapsedBtn:$("elapsedBtn"), resetBtn:$("resetBtn"),
+    resetBtn:$("resetBtn"),
+    elapsedDisplay:$("elapsedDisplay"), elapsedTime:$("elapsedTime"),
     matchNumber:$("matchNumber"), matchMinus:$("matchMinus"), matchPlus:$("matchPlus"),
     redName:$("redName"), redClub:$("redClub"), blueName:$("blueName"), blueClub:$("blueClub"),
     tournamentBtn:$("tournamentBtn"), tournamentDialog:$("tournamentDialog"),
     tournamentSelect:$("tournamentSelect"), tournamentStatus:$("tournamentStatus"),
     yearSelect:$("yearSelect"), countrySelect:$("countrySelect"),
     tournamentCancel:$("tournamentCancel"), tournamentLoad:$("tournamentLoad"),
-    dialog:$("dialog"), dialogText:$("dialogText"), dialogClose:$("dialogClose")
+    helpBtn:$("helpBtn"), helpDialog:$("helpDialog"), helpClose:$("helpClose")
   };
 
   function periodLength(){ return state.matchLength === 4 ? 120 : 180; }
   function totalLength(){ return state.matchLength * 60; }
+  function remainingTime(){ return Math.max(0, totalLength() - state.elapsed); }
 
   function formatTime(sec){
     const s = Math.max(0, Math.floor(sec));
     return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
   }
 
-  function renderWarnings(container, count, side){
-    container.innerHTML = "";
-    for(let i=0;i<3;i++){
-      const d = document.createElement("div");
-      d.className = "dot "+side+"-dot"+(i<count?" on":"");
-      container.appendChild(d);
+  function formatElapsedTime(sec){
+    const s = Math.max(0, Math.round(sec));
+    return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  }
+
+
+  const SEGMENTS = {
+    0:"abcdef", 1:"bc", 2:"abdeg", 3:"abcdg", 4:"bcfg",
+    5:"acdfg", 6:"acdefg", 7:"abc", 8:"abcdefg", 9:"abcdfg"
+  };
+
+  function renderDigitalClock(el, value){
+    if(!el || el.dataset.digitalValue === value) return;
+    el.dataset.digitalValue = value;
+    el.setAttribute("aria-label", value);
+    el.innerHTML = "";
+    for(const char of value){
+      if(char === ":"){
+        const colon = document.createElement("span");
+        colon.className = "digital-colon";
+        colon.setAttribute("aria-hidden","true");
+        el.appendChild(colon);
+        continue;
+      }
+      const digit = document.createElement("span");
+      digit.className = "digital-digit";
+      digit.setAttribute("aria-hidden","true");
+      const active = SEGMENTS[char] || "";
+      for(const name of "abcdefg"){
+        const segment = document.createElement("i");
+        segment.className = `segment segment-${name}${active.includes(name) ? " on" : ""}`;
+        digit.appendChild(segment);
+      }
+      el.appendChild(digit);
     }
+  }
+
+  function renderWarnings(container, count, side){
+    container.textContent = String(count);
   }
 
   function statusText(){
@@ -65,21 +99,22 @@
     els.blueScore.textContent = state.blueScore;
     renderWarnings(els.redWarnings, state.redWarnings, "red");
     renderWarnings(els.blueWarnings, state.blueWarnings, "blue");
-    els.clock.textContent = formatTime(state.elapsed);
-    els.status.textContent = statusText();
-    els.status.style.color = state.finished ? "#ffd900" : state.running ? "#20c75a" :
-      (state.period===2 && Math.abs(state.elapsed-periodLength()) < .5 ? "#ffd900" : "#fff");
-    els.period.textContent = `PERIOD ${state.period} / 2`;
-    els.startStop.textContent = state.finished ? "MATCH SLUT" : (state.running ? "STOPP" : "STARTA");
-    els.startStop.className = state.running ? "stop" : "start";
+    renderDigitalClock(els.clock, formatTime(remainingTime()));
+    els.startStop.textContent = state.running ? "STOPP" : "START";
+    els.startStop.classList.toggle("running-state", state.running);
+    els.startStop.classList.toggle("start-state", !state.running);
     els.startStop.disabled = state.finished;
     els.minusSec.disabled = state.running;
     els.plusSec.disabled = state.running;
-    els.elapsedBtn.disabled = state.running;
+    if(els.elapsedDisplay && els.elapsedTime){
+      const showElapsed = state.hasStarted && !state.running;
+      els.elapsedDisplay.classList.toggle("hidden", !showElapsed);
+      els.elapsedTime.textContent = formatElapsedTime(state.elapsed);
+    }
     els.btn4.disabled = state.hasStarted;
     els.btn6.disabled = state.hasStarted;
-    els.btn4.classList.toggle("active", state.matchLength===4);
-    els.btn6.classList.toggle("active", state.matchLength===6);
+    els.btn4.checked = state.matchLength===4;
+    els.btn6.checked = state.matchLength===6;
     renderCurrentWrestlers();
     broadcast();
   }
@@ -128,22 +163,28 @@
 
   function toggle(){ state.running ? stop() : start(); }
 
-  function reset(){
+  function resetState(){
     if(state.raf) cancelAnimationFrame(state.raf);
     state.redScore=0; state.blueScore=0;
     state.redWarnings=0; state.blueWarnings=0;
     state.period=1; state.elapsed=0; state.running=false;
     state.finished=false; state.hasStarted=false;
     render();
+
+    // Hämta senaste matchlistan varje gång NOLLSTÄLL används.
+    refreshCurrentTournament();
   }
 
   function adjustTime(delta){
     if(state.running) return;
-    if(state.finished && delta<0) state.finished=false;
+    // Knapparna ändrar den VISade nedräkningstiden.
+    // +1 SEK = en sekund mer kvar, -1 SEK = en sekund mindre kvar.
+    const elapsedDelta = -delta;
+    if(state.finished && delta>0) state.finished=false;
     if(state.period===1){
-      state.elapsed = Math.min(Math.max(state.elapsed+delta,0), periodLength());
+      state.elapsed = Math.min(Math.max(state.elapsed+elapsedDelta,0), periodLength());
     } else {
-      state.elapsed = Math.min(Math.max(state.elapsed+delta,periodLength()), totalLength());
+      state.elapsed = Math.min(Math.max(state.elapsed+elapsedDelta,periodLength()), totalLength());
     }
     if(state.elapsed < totalLength()) state.finished=false;
     render();
@@ -189,7 +230,7 @@
       matchLength:state.matchLength,
       redScore:state.redScore, blueScore:state.blueScore,
       redWarnings:state.redWarnings, blueWarnings:state.blueWarnings,
-      period:state.period, elapsed:state.elapsed,
+      period:state.period, elapsed:state.elapsed, remaining:remainingTime(),
       running:state.running, finished:state.finished, hasStarted:state.hasStarted,
       matchNumber: els.matchNumber.value || "1",
       status: statusText(),
@@ -243,6 +284,49 @@
     }
   }
 
+  let matchRefreshInProgress = false;
+
+  async function refreshCurrentTournament(){
+    if(!state.tournament || !state.tournament.url || matchRefreshInProgress) return false;
+
+    matchRefreshInProgress = true;
+    try{
+      const u = encodeURIComponent(state.tournament.url);
+      const r = await fetch(
+        "/.netlify/functions/ringerdb?mode=matches&url="+u+"&_="+Date.now(),
+        {cache:"no-store"}
+      );
+      if(!r.ok) throw new Error("Kunde inte läsa matchlista");
+
+      const data = await r.json();
+      const freshMatches = {};
+      (data.matches || []).forEach(m=>{
+        freshMatches[String(m.matchNumber)] = m;
+      });
+
+      if(Object.keys(freshMatches).length === 0){
+        throw new Error("Inga matcher kunde läsas");
+      }
+
+      state.matches = freshMatches;
+
+      try{
+        localStorage.setItem("brottarklocka_tournament", JSON.stringify({
+          tournament: state.tournament,
+          matches: state.matches
+        }));
+      }catch(e){}
+
+      render();
+      return true;
+    }catch(e){
+      console.warn("Matchlistan kunde inte uppdateras:", e);
+      return false;
+    }finally{
+      matchRefreshInProgress = false;
+    }
+  }
+
   async function chooseTournament(){
     const option = els.tournamentSelect.options[els.tournamentSelect.selectedIndex];
     if(!option) return;
@@ -280,6 +364,9 @@
   };
   els.tournamentCancel.onclick=()=>els.tournamentDialog.classList.add("hidden");
   els.tournamentLoad.onclick=chooseTournament;
+  els.helpBtn.onclick=()=>els.helpDialog.classList.remove("hidden");
+  els.helpClose.onclick=()=>els.helpDialog.classList.add("hidden");
+  els.helpDialog.addEventListener("click",(e)=>{ if(e.target===els.helpDialog) els.helpDialog.classList.add("hidden"); });
 
   try{
     const saved=JSON.parse(localStorage.getItem("brottarklocka_tournament"));
@@ -311,30 +398,81 @@
   $("blueWarnMinus").onclick=()=>{ state.blueWarnings=Math.max(0,state.blueWarnings-1); render(); };
 
   els.startStop.onclick=toggle;
+  document.addEventListener("keydown",(e)=>{
+    if(e.key && e.key.toLowerCase()==="s"){
+      const target=e.target;
+      const tag=(target && target.tagName || "").toLowerCase();
+      const inputType=(target && target.type || "").toLowerCase();
+      // S ska fungera även om ett 4/6-minutersval (radioknapp) fortfarande har fokus.
+      // Blockera bara när användaren faktiskt skriver i ett text-/nummerfält eller väljer i en lista.
+      const isTypingField = tag==="textarea" || tag==="select" ||
+        (tag==="input" && !["radio","checkbox","button","submit"].includes(inputType));
+      if(isTypingField || els.tournamentDialog.classList.contains("hidden")===false || els.helpDialog.classList.contains("hidden")===false) return;
+      e.preventDefault();
+      toggle();
+    }
+  });
+  document.addEventListener("keydown",(e)=>{
+    if(e.key==="Escape"){
+      if(!els.helpDialog.classList.contains("hidden")) els.helpDialog.classList.add("hidden");
+      if(!els.tournamentDialog.classList.contains("hidden")) els.tournamentDialog.classList.add("hidden");
+    }
+  });
   els.minusSec.onclick=()=>adjustTime(-1);
   els.plusSec.onclick=()=>adjustTime(1);
-  els.resetBtn.onclick=reset;
-  els.btn4.onclick=()=>{ if(!state.hasStarted){ state.matchLength=4; reset(); } };
-  els.btn6.onclick=()=>{ if(!state.hasStarted){ state.matchLength=6; reset(); } };
+  els.resetBtn.onclick=()=>{
+    if(window.confirm("Vill du verkligen nollställa matchen?")) resetState();
+  };
+  els.btn4.onclick=()=>{ if(!state.hasStarted){ state.matchLength=4; resetState(); els.btn4.blur(); } };
+  els.btn6.onclick=()=>{ if(!state.hasStarted){ state.matchLength=6; resetState(); els.btn6.blur(); } };
   els.matchMinus.onclick=()=>changeMatchNumber(-1);
   els.matchPlus.onclick=()=>changeMatchNumber(1);
   els.matchNumber.addEventListener("input",()=>{ els.matchNumber.value=els.matchNumber.value.replace(/\D/g,""); broadcast(); });
 
-  els.elapsedBtn.onclick=()=>{
-    if(state.running) return;
-    const s=Math.max(0,Math.floor(state.elapsed)), m=Math.floor(s/60), sec=s%60;
-    els.dialogText.textContent = m===1
-      ? `Matchen har varat 1 minut och ${sec} sekunder.`
-      : `Matchen har varat ${m} minuter och ${sec} sekunder.`;
-    els.dialog.classList.remove("hidden");
-  };
-  els.dialogClose.onclick=()=>els.dialog.classList.add("hidden");
-  els.dialog.addEventListener("click",e=>{ if(e.target===els.dialog) els.dialog.classList.add("hidden"); });
 
-  els.publicBtn.onclick=()=>{
+  let publicWindow = null;
+  const PUBLIC_WINDOW_NAME = "brottarklocka_presentation";
+
+  function openPublicScreen(){
     broadcast();
-    window.open("public.html","brottarklocka_public");
-  };
+
+    try{
+      if(publicWindow && !publicWindow.closed){
+        // Återanvänd alltid samma separata presentationsfönster.
+        try{
+          publicWindow.postMessage({type:"brottarklocka-focus"}, "*");
+        }catch(e){}
+        return true;
+      }
+
+      const w = (window.screen && window.screen.availWidth) ? window.screen.availWidth : 1280;
+      const h = (window.screen && window.screen.availHeight) ? window.screen.availHeight : 800;
+
+      // Öppna popupen direkt från musklicket och navigera därefter. Det ger
+      // webbläsaren starkast möjliga signal om att detta ska vara ett separat fönster.
+      const features = `popup=yes,left=40,top=40,width=${Math.max(900,w-80)},height=${Math.max(650,h-80)},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`;
+      publicWindow = window.open("about:blank", PUBLIC_WINDOW_NAME, features);
+
+      if(publicWindow){
+        try{
+          publicWindow.opener = window;
+          publicWindow.resizeTo(Math.max(900,w-80), Math.max(650,h-80));
+          publicWindow.moveTo(40,40);
+          publicWindow.location.replace("public.html?autofullscreen=1");
+          publicWindow.focus();
+        }catch(e){
+          try{ publicWindow.location.href = "public.html?autofullscreen=1"; }catch(_){}
+        }
+      }
+
+      return !!publicWindow;
+    }catch(e){
+      return false;
+    }
+  }
+
+  // Publikskärmen öppnas endast manuellt.
+  els.publicBtn.onclick=()=>openPublicScreen();
 
   // Lås skärmen vaken där webbläsaren stöder det.
   let wakeLock = null;

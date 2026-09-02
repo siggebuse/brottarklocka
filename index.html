@@ -1,158 +1,162 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#000000" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
   <title>Brottarklocka</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=35">
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <button id="tournamentBtn" class="small tournament">VÄLJ TÄVLING</button>
-      <div class="match-length">
-        <span class="label">MATCHTID</span>
-        <button id="btn4" class="small active">4 MIN</button>
-        <button id="btn6" class="small">6 MIN</button>
+<div id="app">
+  <div class="top-actions">
+    <button id="tournamentBtn" class="outline-btn">VÄLJ MATCH</button>
+    <button id="helpBtn" class="outline-btn help-btn">HJÄLP</button>
+    <div class="top-spacer"></div>
+
+</div>
+
+  <main class="scoreboard">
+    <section class="competitors">
+      <div class="competitor red-panel">
+        <div class="identity">
+          <div id="redClub" class="club">—</div>
+          <div id="redName" class="name">—</div>
+        </div>
+        <div id="redScore" class="big-score">0</div>
+        <div id="redWarnings" class="warning-count red-warning">0</div>
       </div>
-      <button id="publicBtn" class="small public">PUBLIKSKÄRM</button>
-    </header>
 
-    <main class="layout">
-      <section class="side red-side">
-        <div class="wrestler-info red-info">
-          <div id="redName" class="wrestler-name">—</div>
-          <div id="redClub" class="wrestler-club">—</div>
+      <div class="competitor blue-panel">
+        <div class="identity">
+          <div id="blueClub" class="club">—</div>
+          <div id="blueName" class="name">—</div>
         </div>
-        <div class="score-box red-border">
-          <div id="redScore" class="seven score red">0</div>
-        </div>
-
-        <div class="warnings">
-          <div class="warning-title red">VARNINGAR</div>
-          <div id="redWarnings" class="dots"></div>
-        </div>
-
-        <div class="side-controls">
-          <div class="row score-buttons">
-            <button class="red-btn" data-side="red" data-points="1">+1</button>
-            <button class="red-btn" data-side="red" data-points="2">+2</button>
-            <button class="red-btn" data-side="red" data-points="4">+4</button>
-            <button class="red-btn" id="redMinus">−1</button>
-          </div>
-          <div class="row">
-            <button class="red-btn wide" id="redWarnPlus">+ VARNING</button>
-            <button class="red-btn wide" id="redWarnMinus">− VARNING</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="center">
-        <div class="match-number">
-          <div class="label small-label">MATCHNUMMER</div>
-          <div class="match-number-row">
-            <button id="matchMinus" class="gray">−1</button>
-            <input id="matchNumber" inputmode="numeric" pattern="[0-9]*" value="1" aria-label="Matchnummer">
-            <button id="matchPlus" class="gray">+1</button>
-          </div>
-        </div>
-
-        <div id="clock" class="seven clock">00:00</div>
-        <div id="status" class="status">KLAR</div>
-        <div id="period" class="period">PERIOD 1 / 2</div>
-
-        <div class="center-controls">
-          <button id="startStop" class="start">STARTA</button>
-          <div class="row">
-            <button id="minusSec" class="gray wide">−1 SEK</button>
-            <button id="plusSec" class="gray wide">+1 SEK</button>
-          </div>
-          <button id="elapsedBtn" class="yellow">VISA MATCHTID</button>
-          <button id="resetBtn" class="gray reset">ÅTERSTÄLL</button>
-        </div>
-      </section>
-
-      <section class="side blue-side">
-        <div class="wrestler-info blue-info">
-          <div id="blueName" class="wrestler-name">—</div>
-          <div id="blueClub" class="wrestler-club">—</div>
-        </div>
-        <div class="score-box blue-border">
-          <div id="blueScore" class="seven score blue">0</div>
-        </div>
-
-        <div class="warnings">
-          <div class="warning-title blue">VARNINGAR</div>
-          <div id="blueWarnings" class="dots"></div>
-        </div>
-
-        <div class="side-controls">
-          <div class="row score-buttons">
-            <button class="blue-btn" data-side="blue" data-points="1">+1</button>
-            <button class="blue-btn" data-side="blue" data-points="2">+2</button>
-            <button class="blue-btn" data-side="blue" data-points="4">+4</button>
-            <button class="blue-btn" id="blueMinus">−1</button>
-          </div>
-          <div class="row">
-            <button class="blue-btn wide" id="blueWarnPlus">+ VARNING</button>
-            <button class="blue-btn wide" id="blueWarnMinus">− VARNING</button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <div id="tournamentDialog" class="dialog hidden" role="dialog" aria-modal="true">
-    <div class="dialog-card tournament-card">
-      <h2>VÄLJ TÄVLING</h2>
-      <div id="tournamentStatus" class="load-status">Hämtar tävlingar…</div>
-      <div class="tournament-filters">
-        <label>ÅR
-          <select id="yearSelect"></select>
-        </label>
-        <label>LAND
-          <select id="countrySelect">
-            <option value="SE">Sverige</option>
-            <option value="NO">Norge</option>
-            <option value="DK">Danmark</option>
-            <option value="FI">Finland</option>
-            <option value="DE">Tyskland</option>
-            <option value="EE">Estland</option>
-            <option value="LV">Lettland</option>
-            <option value="LT">Litauen</option>
-            <option value="AT">Österrike</option>
-            <option value="CH">Schweiz</option>
-            <option value="FR">Frankrike</option>
-            <option value="BE">Belgien</option>
-            <option value="GB">Storbritannien</option>
-            <option value="IE">Irland</option>
-            <option value="SK">Slovakien</option>
-            <option value="UA">Ukraina</option>
-          </select>
-        </label>
+        <div id="blueScore" class="big-score">0</div>
+        <div id="blueWarnings" class="warning-count blue-warning">0</div>
       </div>
-      <select id="tournamentSelect"></select>
-      <div class="row">
-        <button id="tournamentCancel" class="gray wide">AVBRYT</button>
-        <button id="tournamentLoad" class="yellow wide">VÄLJ</button>
+    </section>
+
+    <section class="controls">
+      <div class="left-settings">
+        <fieldset>
+          <legend>MATCHTID</legend>
+          <label><input type="radio" name="matchLength" id="btn4" checked> 4 minuter / 2 perioder</label>
+          <label><input type="radio" name="matchLength" id="btn6"> 6 minuter / 2 perioder</label>
+        </fieldset>
       </div>
-      <div class="ringer-note">Källa: RingerDB, svenska tävlingar 2026</div>
+
+      <div class="center-clock">
+        <div id="clock" class="clock digital-clock" aria-label="00:00"></div>
+        <div class="meta-line">
+</div>
+        <div class="main-action-row">
+            <button id="startStop" class="startstop start-state">START</button>
+            <button id="resetBtn" class="reset-btn">NOLLSTÄLL</button>
+          </div>
+        <div class="time-adjust">
+          <button id="minusSec" class="dark-btn">−1 SEK</button>
+          <button id="plusSec" class="dark-btn">+1 SEK</button>
+        </div>
+        
+          <button id="publicBtn" class="outline-btn public-screen-btn">PUBLIKSKÄRM</button>
+      </div>
+
+      <div class="right-tools">
+        <div class="tool-columns">
+          <div class="points-col">
+            <h3>POÄNG</h3>
+            <div class="score-controls red-controls">
+              <button data-side="red" data-points="1">1</button>
+              <button data-side="red" data-points="2">2</button>
+              <button data-side="red" data-points="4">4</button>
+              <button data-side="red" data-points="5">5</button>
+              <button data-side="red" data-points="1">+</button>
+              <button id="redMinus">−</button>
+            </div>
+            <div class="score-controls blue-controls">
+              <button data-side="blue" data-points="1">1</button>
+              <button data-side="blue" data-points="2">2</button>
+              <button data-side="blue" data-points="4">4</button>
+              <button data-side="blue" data-points="5">5</button>
+              <button data-side="blue" data-points="1">+</button>
+              <button id="blueMinus">−</button>
+            </div>
+          </div>
+
+          <div class="warnings-col">
+            <h3>VARNINGAR</h3>
+            <div class="warning-group red-text">
+              <span>RÖD</span>
+              <button id="redWarnPlus" class="red-action">+</button>
+              <button id="redWarnMinus" class="red-action">−</button>
+            </div>
+            <div class="warning-group blue-text">
+              <span>BLÅ</span>
+              <button id="blueWarnPlus" class="blue-action">+</button>
+              <button id="blueWarnMinus" class="blue-action">−</button>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="match-number-box">
+          <legend>MATCHNUMMER</legend>
+          <input id="matchNumber" inputmode="numeric" value="1" aria-label="Matchnummer">
+          <div>
+            <button id="matchMinus" class="dark-btn">−</button>
+            <button id="matchPlus" class="dark-btn">+</button>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="elapsedDisplay" class="elapsed-display hidden" aria-live="polite">FÖRFLUTEN TID <strong id="elapsedTime">00:00</strong></div>
+
+<div id="tournamentDialog" class="dialog hidden" role="dialog" aria-modal="true">
+  <div class="dialog-card tournament-card">
+    <h2>VÄLJ TÄVLING</h2>
+    <div class="tournament-filters">
+      <label>ÅR<select id="yearSelect"></select></label>
+      <label>LAND
+        <select id="countrySelect">
+          <option value="SE">Sverige</option><option value="NO">Norge</option>
+          <option value="DK">Danmark</option><option value="FI">Finland</option>
+          <option value="DE">Tyskland</option><option value="EE">Estland</option>
+          <option value="LV">Lettland</option><option value="LT">Litauen</option>
+          <option value="AT">Österrike</option><option value="CH">Schweiz</option>
+          <option value="FR">Frankrike</option><option value="BE">Belgien</option>
+          <option value="GB">Storbritannien</option><option value="IE">Irland</option>
+          <option value="SK">Slovakien</option><option value="UA">Ukraina</option>
+        </select>
+      </label>
+    </div>
+    <div id="tournamentStatus" class="load-status">Hämtar tävlingar…</div>
+    <select id="tournamentSelect"></select>
+    <div class="dialog-buttons">
+      <button id="tournamentCancel" class="dark-btn">AVBRYT</button>
+      <button id="tournamentLoad" class="select-btn">VÄLJ</button>
     </div>
   </div>
+</div>
 
-  <div id="dialog" class="dialog hidden" role="dialog" aria-modal="true">
-    <div class="dialog-card">
-      <h2>MATCHTID</h2>
-      <p id="dialogText"></p>
-      <button id="dialogClose" class="yellow">OK</button>
+<div id="helpDialog" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="dialog-card help-card">
+    <h2 id="helpTitle">HJÄLP</h2>
+    <p>Detta är en webbapp för tidtagning och presentation av scoreboard på extern skärm.</p>
+    <p>Appen hämtar info från publicerade matchlistor från TR genom att klicka på <strong>"Välj match"</strong>.</p>
+    <p>Appen uppdaterar info från matchlistor när man klickar på <strong>"Nollställ"</strong>.</p>
+    <p>För presentation på extern skärm tryck <strong>"Publikskärm"</strong>. Då öppnas en presentation av scoreboard i ett nytt browserfönster. Dra detta fönster till extern skärm.</p>
+    <p>För att starta/stoppa klockan kan detta göras med musklick eller genom att trycka på <strong>"S"</strong>.</p>
+    <div class="dialog-buttons">
+      <button id="helpClose" class="select-btn">STÄNG</button>
     </div>
   </div>
+</div>
 
-  <script src="app.js?v=10"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

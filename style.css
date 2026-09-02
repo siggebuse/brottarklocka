@@ -1,162 +1,240 @@
-@font-face {
-  font-family: "Seven";
-  src: local("Courier New");
+
+:root{--red:#d00000;--red2:#8d0000;--blue:#1010d8;--blue2:#07076b;--yellow:#fff400;--green:#087d11}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+button,input,select{font:inherit}
+button{cursor:pointer;color:#fff}
+.hidden{display:none!important}
+#app{height:100vh;padding:1.8vh 1.8vw}
+.top-actions{height:9.5vh;display:flex;align-items:center;gap:1.8vw}
+.top-spacer{flex:1}
+.outline-btn{height:7vh;min-width:17vw;background:#050505;border:1px solid #777;font-weight:800;font-size:2.1vh;padding:0 2vw}
+.scoreboard{height:87vh;display:grid;grid-template-rows:44% 56%;gap:2.4vh}
+.competitors{display:grid;grid-template-rows:1fr 1fr;gap:3vh;padding-right:31vw}
+.competitor{position:relative;display:grid;grid-template-columns:1fr 16vw;border:2px solid;min-height:0}
+.red-panel{border-color:#f20;background:linear-gradient(90deg,var(--red2),#160000)}
+.blue-panel{border-color:#173cff;background:linear-gradient(90deg,var(--blue2),#05051d)}
+.identity{display:flex;flex-direction:column;justify-content:center;padding:1vh 2vw;min-width:0}
+.club{font-size:3vh;font-style:italic;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name{font-size:5.8vh;font-style:italic;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1.4vh}
+.big-score{border-left:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12vh;font-style:italic;font-weight:900}
+.red-panel .big-score{color:#fff;border-color:#f20;background:rgba(170,0,0,.55)}
+.blue-panel .big-score{color:#fff;border-color:#173cff;background:rgba(0,0,150,.48)}
+.warning-count{position:absolute;right:-4.2vw;top:-1.4vh;width:4.3vw;height:8.2vh;background:#050505;border:1px solid #aaa;display:flex;align-items:center;justify-content:center;font-size:5vh;font-style:italic;font-weight:900}
+.red-warning{color:#e32626}.blue-warning{color:#245dff}
+
+.controls{display:grid;grid-template-columns:21vw 1fr 29vw;gap:2.8vw;min-height:0}
+.left-settings{padding-top:4.8vh}
+fieldset{border:1px solid #777;padding:2.2vh 1.3vw}
+legend{font-size:2.4vh;font-weight:900;padding:0 .7vw}
+.left-settings label{display:block;font-size:2.1vh;margin:1.6vh 0}
+.left-settings input{width:2.4vh;height:2.4vh;vertical-align:middle}
+.center-clock{display:flex;flex-direction:column;align-items:center;min-width:0}
+.clock{width:100%;height:24vh;border:1px solid #777;display:flex;align-items:center;justify-content:center;color:var(--yellow)}
+.digital-clock{gap:1.2vh;padding:1.8vh 1vw}
+.digital-digit{position:relative;width:7.6vh;height:13.6vh;display:inline-block;flex:0 0 auto}
+.segment{position:absolute;display:block;background:#2d2a00;opacity:.34;border-radius:.5vh;transition:opacity .06s,background .06s;box-shadow:none}
+.segment.on{background:var(--yellow);opacity:1;box-shadow:0 0 1.1vh rgba(255,244,0,.72)}
+.segment-a,.segment-d,.segment-g{left:1.2vh;width:5.2vh;height:1.05vh}
+.segment-a{top:0}.segment-g{top:6.25vh}.segment-d{bottom:0}
+.segment-b,.segment-c,.segment-e,.segment-f{width:1.05vh;height:5.2vh}
+.segment-b{right:0;top:.85vh}.segment-c{right:0;bottom:.85vh}.segment-f{left:0;top:.85vh}.segment-e{left:0;bottom:.85vh}
+.digital-colon{position:relative;width:1.8vh;height:13.6vh;display:inline-block;flex:0 0 auto}
+.digital-colon::before,.digital-colon::after{content:"";position:absolute;left:.35vh;width:1.1vh;height:1.1vh;border-radius:50%;background:var(--yellow);box-shadow:0 0 1vh rgba(255,244,0,.7)}
+.digital-colon::before{top:4vh}.digital-colon::after{bottom:4vh}
+.meta-line{height:4vh;display:flex;justify-content:center;gap:2vw;align-items:center;font-size:1.8vh;font-weight:800;color:#ddd}
+.startstop{width:100%;height:7.5vh;margin-top:1.4vh;background:linear-gradient(#079315,#005709);border:1px solid #ccc;font-size:4vh;font-weight:900}
+.time-adjust{display:flex;gap:1.4vw;margin:1.8vh 0;width:100%}
+.dark-btn{background:#282828;border:1px solid #888;font-weight:800}
+.time-adjust .dark-btn{flex:1;height:5vh}
+.reset-btn{width:100%;height:7.5vh;background:linear-gradient(#b00000,#6b0000);border:1px solid #ccc;font-size:3vh;font-weight:900}
+.right-tools{margin-top:-45vh;padding-left:1.6vw;min-height:0}
+.tool-columns{display:grid;grid-template-columns:1fr .8fr;gap:1.6vw}
+.tool-columns h3{text-align:center;margin:0 0 1vh;font-size:2.2vh}
+.points-col,.warnings-col{border-left:1px solid #777;padding-left:1.4vw}
+.score-controls{display:grid;grid-template-columns:1fr 1fr;gap:1.1vh .8vw;margin-bottom:1.8vh}
+.score-controls button{height:5.6vh;border:1px solid #aaa;font-size:2.5vh;font-weight:900}
+.red-controls button,.red-action{background:linear-gradient(#bd0a0a,#790000)}
+.blue-controls button,.blue-action{background:linear-gradient(#1515cc,#07076d)}
+.warning-group{display:grid;grid-template-columns:1fr 1fr;gap:1.1vh .8vw;margin-bottom:2.8vh;text-align:center}
+.warning-group span{grid-column:1/-1;font-size:2vh;font-weight:900}
+.warning-group button{height:6vh;border:1px solid #aaa;font-size:3vh;font-weight:900}
+.red-text{color:#f22}.blue-text{color:#245dff}
+.match-number-box{margin-top:3vh;text-align:center}
+#matchNumber{width:75%;height:8vh;background:#050505;color:#fff;border:1px solid #777;text-align:center;font-size:5vh;font-weight:900}
+.match-number-box>div{display:flex;gap:1.5vw;margin-top:1.4vh}
+.match-number-box button{flex:1;height:5vh}
+
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:100}
+.dialog-card{width:min(680px,90vw);background:#111;border:1px solid #888;padding:30px;text-align:center}
+.dialog-card h2{margin-top:0}
+.tournament-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tournament-filters label{text-align:left;font-weight:800}
+.tournament-filters select,#tournamentSelect{width:100%;margin-top:6px;background:#fff;color:#000;padding:10px;font-size:18px}
+#tournamentSelect{height:220px}
+.load-status{margin:8px 0;color:#ddd}
+.dialog-buttons{display:flex;justify-content:center;gap:12px;margin-top:14px}
+.dialog-buttons button,.elapsed-card button{min-width:130px;padding:12px}
+.select-btn{background:#8b7600;border:1px solid #d4bc00;font-weight:900}
+.elapsed-card p{font-size:4vh;font-weight:900;margin:3vh 0}
+
+@media(max-width:950px){
+  .club{font-size:2.6vh}.name{font-size:5vh}
+  .controls{grid-template-columns:20vw 1fr 30vw}
 }
 
-:root {
-  --red: #ff2b2b;
-  --blue: #1f6fff;
-  --yellow: #ffd900;
-  --green: #20c75a;
-  --bg: #000;
-  --fg: #fff;
-  --gray: #444;
+
+/* Tydligare val av matchtid 4/6 minuter */
+.match-length label,
+.matchtime label,
+fieldset label {
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+input[type="radio"] {
+  width: 1.5em;
+  height: 1.5em;
+  accent-color: #ffd400;
+}
+input[type="radio"]:checked + span,
+input[type="radio"]:checked + strong {
+  color: #ffd400;
+  font-weight: 900;
+}
+label:has(input[type="radio"]:checked) {
+  background: #ffd400;
+  color: #000;
+  border-color: #ffd400 !important;
+  box-shadow: 0 0 0 3px rgba(255,212,0,.35);
+  font-weight: 900;
+}
+label:has(input[type="radio"]:checked) span,
+label:has(input[type="radio"]:checked) strong {
+  color: #000;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin:0; width:100%; height:100%; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; overflow:hidden; }
-button, input { font: inherit; }
 
-#app { min-height:100svh; padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom)); }
-
-.topbar {
-  height: 52px;
-  display:flex; align-items:center; justify-content:center; position:relative;
-}
-.match-length { display:flex; align-items:center; gap:10px; }
-.label { font-weight:800; letter-spacing:.04em; }
-.small-label { font-size:12px; margin-bottom:4px; }
-
-button {
-  border:1px solid #666; color:white; background:#2c2c2c;
-  border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer;
-}
-button:active { transform: scale(.98); }
-button:disabled { opacity:.35; }
-button.small { min-width:88px; height:38px; }
-button.active { background:var(--yellow); color:#000; border-color:var(--yellow); }
-button.public { position:absolute; right:0; background:#222; }
-
-.layout {
-  display:grid;
-  grid-template-columns: 270px minmax(320px,1fr) 270px;
-  gap:14px;
-  height: calc(100svh - 66px);
-  align-items:stretch;
+/* V8: START/STOPP och NOLLSTÄLL ska vara exakt lika stora */
+.center-controls #startStopBtn,
+.center-controls #resetBtn,
+#startStopBtn,
+#resetBtn {
+  width: 100% !important;
+  height: 7.5vh !important;
+  min-height: 58px !important;
+  padding: 0.8vh 1vw !important;
+  font-size: 3vh !important;
+  box-sizing: border-box !important;
 }
 
-.side, .center { min-height:0; }
-.side { display:flex; flex-direction:column; }
-.center { display:flex; flex-direction:column; align-items:center; }
-
-.score-box {
-  height:225px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-  background:#0b0b0b;
+/* Publikskärm placerad nere till höger, i nivå med NOLLSTÄLL */
+.public-screen-btn {
+  position: absolute;
+  right: 2vw;
+  bottom: 2.2vh;
+  min-width: 15vw;
+  height: 7.5vh;
+  min-height: 58px;
+  font-size: 2.2vh;
+  z-index: 5;
 }
-.red-border { border:3px solid var(--red); }
-.blue-border { border:3px solid var(--blue); }
+body { position: relative; }
 
-.seven {
-  font-family: "Courier New", monospace;
-  font-weight:900;
-  letter-spacing:.02em;
-  font-variant-numeric: tabular-nums;
-}
-.score { font-size:150px; line-height:1; }
-.red { color:var(--red); }
-.blue { color:var(--blue); }
-.clock { color:var(--yellow); font-size:118px; line-height:1; margin-top:4px; white-space:nowrap; }
 
-.warnings { text-align:center; padding-top:8px; }
-.warning-title { font-size:12px; font-weight:900; margin-bottom:7px; }
-.dots { display:flex; justify-content:center; gap:18px; }
-.dot { width:29px; height:29px; border-radius:50%; background:transparent; }
-.dot.red-dot { border:3px solid var(--red); }
-.dot.red-dot.on { background:var(--red); }
-.dot.blue-dot { border:3px solid var(--blue); }
-.dot.blue-dot.on { background:var(--blue); }
-
-.side-controls { margin-top:auto; padding-bottom:70px; }
-.row { display:flex; justify-content:center; gap:7px; margin-top:7px; }
-.score-buttons button { width:50px; height:40px; padding:0; }
-.wide { min-width:104px; }
-.red-btn { border:2px solid var(--red); background:rgba(255,43,43,.15); }
-.blue-btn { border:2px solid var(--blue); background:rgba(31,111,255,.15); }
-
-.match-number { text-align:center; }
-.match-number-row { display:flex; gap:7px; align-items:center; }
-.match-number-row button { width:48px; height:38px; padding:0; }
-#matchNumber {
-  width:125px; height:40px; text-align:center; border:0; border-radius:6px;
-  background:#fff; color:#000; font-size:24px; font-weight:800;
-}
-.status { height:31px; font-size:24px; font-weight:900; margin-top:5px; }
-.period { height:24px; font-size:18px; font-weight:800; }
-
-.center-controls { margin-top:auto; width:min(265px,95%); padding-bottom:35px; }
-#startStop { width:100%; height:44px; font-size:18px; }
-.start { background:var(--green); border-color:var(--green); }
-.stop { background:#d11; border-color:#d11; }
-.gray { background:#353535; }
-.yellow { background:var(--yellow); color:#000; border-color:var(--yellow); }
-#elapsedBtn { width:100%; height:36px; margin-top:7px; }
-.reset { display:block; width:180px; height:32px; margin:7px auto 0; padding:0; }
-
-.dialog {
-  position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; z-index:20;
-}
-.hidden { display:none; }
-.dialog-card { width:min(420px,88vw); background:#161616; border:1px solid #555; border-radius:14px; padding:24px; text-align:center; }
-.dialog-card h2 { margin:0 0 10px; }
-.dialog-card p { font-size:20px; }
-
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 220px minmax(280px,1fr) 220px; gap:8px; }
-  .score { font-size:120px; }
-  .clock { font-size:92px; }
-  .side-controls { padding-bottom:45px; }
+/* V9: korrigerad selector — den riktiga START/STOPP-knappen heter #startStop */
+#startStop,
+#resetBtn {
+  display: block !important;
+  width: 100% !important;
+  height: 7.5vh !important;
+  min-height: 58px !important;
+  padding: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+  font-size: 3vh !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
 }
 
-@media (orientation: portrait) {
-  html, body { overflow:auto; }
-  #app { min-width:900px; }
+#startStop {
+  margin-top: 1.4vh !important;
 }
 
-button.tournament { position:absolute; left:0; min-width:130px; background:#222; }
-.wrestler-info { min-height:66px; display:flex; flex-direction:column; justify-content:center; text-align:center; padding:2px 5px 8px; }
-.wrestler-name { font-size:20px; font-weight:900; line-height:1.1; }
-.wrestler-club { font-size:14px; font-weight:700; color:#ddd; margin-top:4px; line-height:1.1; }
-.red-info .wrestler-name { color:var(--red); }
-.blue-info .wrestler-name { color:var(--blue); }
-.tournament-card { width:min(650px,92vw); }
-#tournamentSelect { width:100%; min-height:48px; background:#fff; color:#000; border:0; border-radius:8px; padding:8px; font-size:17px; margin:10px 0; }
-.load-status { color:#ddd; min-height:24px; }
-.ringer-note { color:#aaa; font-size:12px; margin-top:12px; }
-@media (max-height: 740px) {
-  .wrestler-info { min-height:52px; }
-  .wrestler-name { font-size:17px; }
-  .score-box { height:190px; }
-  .score { font-size:125px; }
+/* Publikskärmen hålls nere till höger i samma höjd som NOLLSTÄLL */
+.public-screen-btn {
+  bottom: 2.2vh !important;
+  height: 7.5vh !important;
+  min-height: 58px !important;
 }
 
-.tournament-filters{
-  display:flex;
-  gap:12px;
-  margin:12px 0;
+
+/* V10 huvudkontroller */
+.main-action-row{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:1.2vw !important;
+  width:100% !important;
+  margin-top:1.2vh !important;
 }
-.tournament-filters label{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  font-size:15px;
-  font-weight:700;
+.main-action-row #startStop,
+.main-action-row #resetBtn{
+  width:100% !important;
+  height:7vh !important;
+  min-height:54px !important;
+  margin:0 !important;
+  padding:.5vh .8vw !important;
+  box-sizing:border-box !important;
+  font-size:2.8vh !important;
+  font-weight:900 !important;
 }
-.tournament-filters select{
-  width:100%;
-  font-size:20px;
-  padding:10px;
-  border-radius:8px;
-  background:#fff;
-  color:#000;
+#startStop.start-state{
+  background:#159447 !important;
+  border-color:#45d27a !important;
+  color:#fff !important;
 }
+#startStop.running-state{
+  background:#c62828 !important;
+  border-color:#ff5b5b !important;
+  color:#fff !important;
+}
+.time-adjust{
+  justify-content:center !important;
+  gap:.8vw !important;
+  margin:.9vh 0 !important;
+}
+.time-adjust button{
+  width:auto !important;
+  min-width:6.5vw !important;
+  height:4.8vh !important;
+  min-height:38px !important;
+  padding:.3vh .8vw !important;
+  font-size:1.7vh !important;
+}
+
+/* V11 */
+#status, #period, .status, .period, .meta { display:none !important; }
+
+#startStop.start-state{
+  background:#159447 !important;
+  border-color:#45d27a !important;
+  color:#fff !important;
+}
+#startStop.running-state{
+  background:#c62828 !important;
+  border-color:#ff5b5b !important;
+  color:#fff !important;
+}
+
+
+/* V13: förfluten tid visas automatiskt nere till vänster när klockan står still */
+.elapsed-display{position:absolute;left:1.8vw;bottom:2.2vh;z-index:6;min-width:18vw;height:7.5vh;min-height:58px;border:1px solid #777;background:#050505;display:flex;align-items:center;justify-content:center;gap:.8vw;padding:0 1.3vw;font-size:1.9vh;font-weight:800;color:#ddd}
+.elapsed-display strong{color:var(--yellow);font-size:3.2vh;letter-spacing:.05em}
+
+
+/* V15: hjälpknapp och hjälpdialog */
+.help-btn{min-width:11vw}
+.help-card{width:min(760px,90vw);text-align:left;line-height:1.5}
+.help-card h2{text-align:center}
+.help-card p{font-size:2.2vh;margin:1.5vh 0}
+.help-card .dialog-buttons{text-align:center}
+@media(max-width:950px){.help-card p{font-size:2vh}}
