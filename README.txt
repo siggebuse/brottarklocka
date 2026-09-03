@@ -52,3 +52,5 @@ V21:
 - Matchnummer större och luftigare.
 - Namn- och klubbtext större.
 - All text på publikskärmen använder Arial Rounded-liknande typsnitt, utom seven-segment-klockan.
+
+V23: Publiklayout uppflyttad för bättre nederkant på extern skärm. HELSKÄRM-knapp tillagd; knappen döljs automatiskt i äkta helskärm.
