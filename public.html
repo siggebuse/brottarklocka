@@ -6,20 +6,20 @@
 <title>Brottarklocka – publikskärm</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:"Arial Rounded MT Bold","Arial Rounded MT",Arial,sans-serif;overflow:hidden}
 .screen{height:100vh;padding:2.5vh 1.8vw;display:grid;grid-template-rows:17vh 46vh 1fr;gap:2vh}
 .top{display:flex;justify-content:center;align-items:center}
-.matchbox{border:1px solid #777;min-width:20vw;height:14vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.matchlabel{font-size:2.8vh;font-weight:800}.matchnum{font-size:8vh;font-style:italic;font-weight:900;line-height:1}
+.matchbox{border:0;min-width:0;height:14vh;display:flex;align-items:center;justify-content:center;padding:0 2vw}
+.matchnum{font-size:12.5vh;font-weight:900;line-height:.92;white-space:nowrap;text-align:center}
 .people{display:grid;grid-template-columns:1fr 1fr;gap:1.8vw}
 .person{position:relative;border:6px solid;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .redp{border-color:#f20}.bluep{border-color:#173cff}
-.club{font-size:4.6vh;font-style:italic;font-weight:800;margin-bottom:5vh;text-align:center}
-.name{font-size:6.2vh;font-style:italic;font-weight:900;text-align:center}
-.warn{position:absolute;top:-9.5vh;left:50%;transform:translateX(-50%);display:none;font-size:8vh;line-height:1;font-style:italic;font-weight:900;background:transparent;border:0}
+.club{font-size:5.6vh;font-weight:800;margin-bottom:4.2vh;text-align:center}
+.name{font-size:7.6vh;font-weight:900;text-align:center}
+.warn{position:absolute;top:-9.5vh;left:50%;transform:translateX(-50%);display:none;font-size:8vh;line-height:1;font-style:normal;font-weight:900;background:transparent;border:0}
 .redp .warn{color:#f20}.bluep .warn{color:#173cff}
 .bottom{display:grid;grid-template-columns:28.5vw 1fr 28.5vw;gap:1.8vw}
-.score{border:6px solid;display:flex;align-items:center;justify-content:center;font-size:25vh;font-style:italic;font-weight:900}
+.score{border:6px solid;display:flex;align-items:center;justify-content:center;font-size:25vh;font-style:normal;font-weight:900}
 .redscore{border-color:#f20}.bluescore{border-color:#173cff}
 .center{border:1px solid #777;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
 .clock{width:100%;display:flex;align-items:center;justify-content:center;gap:1.9vh;color:#fff400;padding:1vh}
@@ -40,7 +40,7 @@ html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family
 </head>
 <body>
 <div class="screen">
-  <div class="top"><div class="matchbox"><div class="matchlabel">MATCH</div><div id="matchNumber" class="matchnum">1</div></div></div>
+  <div class="top"><div class="matchbox"><div id="matchNumber" class="matchnum">1</div></div></div>
   <div class="people">
     <div class="person redp"><div id="redWarnings" class="warn" aria-label="Röda varningar"></div><div id="redClub" class="club">—</div><div id="redName" class="name">—</div></div>
     <div class="person bluep"><div id="blueWarnings" class="warn" aria-label="Blå varningar"></div><div id="blueClub" class="club">—</div><div id="blueName" class="name">—</div></div>

@@ -43,3 +43,12 @@ V20:
 - Publikskärm: vid dubbla efternamn visas bara det första efternamnet.
 - Publikskärm: namntexten är större; klubbtexten är oförändrad.
 - Hjälptext uppdaterad med "browserfönster eller flik".
+
+
+V21:
+- PUBLIKSKÄRM flyttad mellan VÄLJ TÄVLING och HJÄLP.
+- VÄLJ MATCH ändrat till VÄLJ TÄVLING.
+- Publikskärm: ordet MATCH och ramen kring matchnumret borttagna.
+- Matchnummer större och luftigare.
+- Namn- och klubbtext större.
+- All text på publikskärmen använder Arial Rounded-liknande typsnitt, utom seven-segment-klockan.
